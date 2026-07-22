@@ -1,3 +1,4 @@
+import { signUp } from "@/app/lib/auth";
 import { error } from "console";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -18,6 +19,8 @@ export async function POST(request: NextRequest){
                 { status: 400 }
             )
         }
+
+        const result = await signUp(email, password);
     }
     catch (error) {
         console.error("Signup error: ", error);
