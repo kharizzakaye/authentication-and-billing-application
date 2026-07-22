@@ -91,3 +91,8 @@ export async function getSession() {
 
   return session
 }
+
+export async function signOut() {
+  const session = await getSession()
+  session.destroy()
+}
