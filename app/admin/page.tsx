@@ -1,4 +1,4 @@
-import { getSession } from "../lib/auth"
+import { getSession } from "../lib/session"
 import { redirect } from "next/navigation"
 import SignOutButton from "../components/SignOutButton"
 import { db } from "../lib/db"

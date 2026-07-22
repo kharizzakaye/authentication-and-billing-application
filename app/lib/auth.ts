@@ -1,13 +1,10 @@
-import { randomBytes, scrypt, timingSafeEqual } from "crypto"
 import { db } from "./db";
-import { promisify } from "util";
-import { cookies } from "next/headers"
-import { getIronSession } from "iron-session"
+import { hashPassword, verifyPassword } from "./password";
 
-export async function signUp( email:string, password: string) {
+export async function signUp(email: string, password: string) {
     try {
-        const exisitngUser = await db.user.findUnique({where: { email }})
-        if (exisitngUser) return { success: false, error: "User already exists"}
+        const existingUser = await db.user.findUnique({ where: { email } })
+        if (existingUser) return { success: false, error: "User already exists" }
 
         const { salt, hash } = await hashPassword(password);
         const userCount = await db.user.count();
@@ -18,22 +15,22 @@ export async function signUp( email:string, password: string) {
                 email,
                 password: hash,
                 salt,
-                role
+                role,
             },
         })
 
         return { success: true, user }
     }
-    catch (error) { 
+    catch (error) {
         console.error("Sign up error: ", error);
-        return { success: false, error: "Failed to create user"}
+        return { success: false, error: "Failed to create user" }
     }
 }
 
-export async function signIn(email: string, password:string) {
+export async function signIn(email: string, password: string) {
     try {
-        const user = await db.user.findUnique({ where: { email }})
-        
+        const user = await db.user.findUnique({ where: { email } })
+
         if (!user) {
             return { success: false, error: "Invalid credentials" }
         }
@@ -45,54 +42,6 @@ export async function signIn(email: string, password:string) {
     }
     catch (error) {
         console.error("Sign in error: ", error);
-        return { success: false, error: "Failed to sign in"}
+        return { success: false, error: "Failed to sign in" }
     }
-}
-
-export async function verifyPassword(password:string, hash:string, salt:string){
-    const derivedKey = (await scrypAsync(password, salt, KEY_LENGTH)) as Buffer
-    return timingSafeEqual(Buffer.from(hash, "hex"), derivedKey)
-}
-
-const scrypAsync = promisify(scrypt);
-
-export async function hashPassword(password: string) {
-    const salt = randomBytes(16).toString("hex");
-    const derivedKey = (await scrypAsync(password, salt, 64) as Buffer)
-
-    return { salt, hash: derivedKey.toString("hex") }
-}
-
-export type SessionData = {
-    userId?: string
-    email?: string
-    role?: string
-    isLoggedIn: boolean
-}
-
-export const sessionOptions = {
-  password: process.env.SESSION_PASSWORD!,
-  cookieName: "auth-session",
-  cookieOptions: {
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  },
-}
-
-export async function getSession() {
-  const cookieStore = await cookies()
-  const session = await getIronSession<SessionData>(cookieStore, sessionOptions)
-
-  if (!session.isLoggedIn) {
-    session.isLoggedIn = false
-  }
-
-  return session
-}
-
-export async function signOut() {
-  const session = await getSession()
-  session.destroy()
 }

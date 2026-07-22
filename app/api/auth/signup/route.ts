@@ -1,4 +1,5 @@
-import { getSession, signUp } from "@/app/lib/auth";
+import { getSession } from "@/app/lib/session";
+import { signUp } from "@/app/lib/auth";
 import { error } from "console";
 import { NextRequest, NextResponse } from "next/server";
 
