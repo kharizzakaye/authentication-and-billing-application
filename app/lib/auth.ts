@@ -1,4 +1,4 @@
-import { randomBytes, scrypt } from "crypto"
+import { randomBytes, scrypt, timingSafeEqual } from "crypto"
 import { db } from "./db";
 import { promisify } from "util";
 import { cookies } from "next/headers"
@@ -28,6 +28,30 @@ export async function signUp( email:string, password: string) {
         console.error("Sign up error: ", error);
         return { success: false, error: "Failed to create user"}
     }
+}
+
+export async function signIn(email: string, password:string) {
+    try {
+        const user = await db.user.findUnique({ where: { email }})
+        
+        if (!user) {
+            return { success: false, error: "Invalid credentials" }
+        }
+
+        const isValid = await verifyPassword(password, user.password, user.salt)
+
+        if (!isValid) return { success: false, error: "Invalid credentials" }
+        return { success: true, user }
+    }
+    catch (error) {
+        console.error("Sign in error: ", error);
+        return { success: false, error: "Failed to sign in"}
+    }
+}
+
+export async function verifyPassword(password:string, hash:string, salt:string){
+    const derivedKey = (await scrypAsync(password, salt, KEY_LENGTH)) as Buffer
+    return timingSafeEqual(Buffer.from(hash, "hex"), derivedKey)
 }
 
 const scrypAsync = promisify(scrypt);
