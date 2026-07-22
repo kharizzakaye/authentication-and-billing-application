@@ -1,4 +1,4 @@
-import { getSession, signIn } from "@/lib/auth"
+import { getSession, signIn } from "@/app/lib/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
