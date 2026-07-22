@@ -1,4 +1,4 @@
-import { signUp } from "@/app/lib/auth";
+import { getSession, signUp } from "@/app/lib/auth";
 import { error } from "console";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -21,6 +21,27 @@ export async function POST(request: NextRequest){
         }
 
         const result = await signUp(email, password);
+
+         if (!result.success || !result.user) {
+            return NextResponse.json({ error: result.error }, { status: 400 })
+            }
+
+        const session = await getSession()
+        session.userId = result.user.id
+        session.email = result.user.email
+        session.role = result.user.role
+        session.isLoggedIn = true
+
+        await session.save();
+
+        return NextResponse.json({
+            success: true,
+            user: {
+                id: result.user.id,
+                email: result.user.email,
+                role: result.user.role,
+            },
+        })
     }
     catch (error) {
         console.error("Signup error: ", error);
